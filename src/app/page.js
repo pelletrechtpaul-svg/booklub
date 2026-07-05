@@ -12,12 +12,14 @@ import {
 import { getDb } from "@/lib/firebase";
 import Ranking from "@/components/Ranking";
 import AddBookModal from "@/components/AddBookModal";
+import BookDetailModal from "@/components/BookDetailModal";
 
 export default function Home() {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [adding, setAdding] = useState(false);
+  const [openId, setOpenId] = useState(null);
 
   // Live subscription — the ranking updates in real time for everyone.
   useEffect(() => {
@@ -112,6 +114,7 @@ export default function Home() {
           onReorder={persistOrder}
           onRemove={removeBook}
           onUpdate={updateBook}
+          onOpen={setOpenId}
         />
       )}
 
@@ -121,6 +124,14 @@ export default function Home() {
 
       {adding && (
         <AddBookModal onAdd={addBook} onClose={() => setAdding(false)} />
+      )}
+
+      {openId && books.find((b) => b.id === openId) && (
+        <BookDetailModal
+          book={books.find((b) => b.id === openId)}
+          onUpdate={updateBook}
+          onClose={() => setOpenId(null)}
+        />
       )}
     </main>
   );

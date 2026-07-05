@@ -18,7 +18,7 @@ import {
 } from "@dnd-kit/sortable";
 import SortableBook from "./SortableBook";
 
-export default function Ranking({ books, onReorder, onRemove, onUpdate }) {
+export default function Ranking({ books, onReorder, onRemove, onUpdate, onOpen }) {
   // A small activation distance/delay so taps and scrolls aren't hijacked,
   // while a deliberate drag still feels immediate and natural.
   const sensors = useSensors(
@@ -61,6 +61,7 @@ export default function Ranking({ books, onReorder, onRemove, onUpdate }) {
               rank={index + 1}
               onRemove={onRemove}
               onUpdate={onUpdate}
+              onOpen={onOpen}
             />
           ))}
         </ol>
