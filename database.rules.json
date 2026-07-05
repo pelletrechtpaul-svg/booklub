@@ -1,0 +1,9 @@
+{
+  "rules": {
+    "books": {
+      ".read": true,
+      ".write": true,
+      ".indexOn": ["order"]
+    }
+  }
+}

@@ -2,21 +2,16 @@
 
 import { useEffect, useState } from "react";
 import {
-  collection,
-  onSnapshot,
-  orderBy,
-  query,
-  addDoc,
-  deleteDoc,
-  doc,
-  writeBatch,
+  ref,
+  onValue,
+  push,
+  remove,
+  update,
   serverTimestamp,
-} from "firebase/firestore";
-import { db } from "@/lib/firebase";
+} from "firebase/database";
+import { getDb } from "@/lib/firebase";
 import Ranking from "@/components/Ranking";
 import AddBookModal from "@/components/AddBookModal";
-
-const booksRef = collection(db, "books");
 
 export default function Home() {
   const [books, setBooks] = useState([]);
@@ -26,11 +21,25 @@ export default function Home() {
 
   // Live subscription — the ranking updates in real time for everyone.
   useEffect(() => {
-    const q = query(booksRef, orderBy("order", "asc"));
-    const unsub = onSnapshot(
-      q,
+    let database;
+    try {
+      database = getDb();
+    } catch (err) {
+      console.error(err);
+      setError(
+        "Connexion à la base impossible. Vérifie la configuration Firebase."
+      );
+      setLoading(false);
+      return;
+    }
+    const unsub = onValue(
+      ref(database, "books"),
       (snap) => {
-        setBooks(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+        const val = snap.val() || {};
+        const list = Object.entries(val)
+          .map(([id, data]) => ({ id, ...data }))
+          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+        setBooks(list);
         setLoading(false);
       },
       (err) => {
@@ -47,7 +56,7 @@ export default function Home() {
   async function addBook(book) {
     // New books go to the bottom of the ranking.
     const maxOrder = books.reduce((m, b) => Math.max(m, b.order ?? 0), 0);
-    await addDoc(booksRef, {
+    await push(ref(getDb(), "books"), {
       title: book.title,
       author: book.author,
       cover: book.cover || "",
@@ -58,17 +67,17 @@ export default function Home() {
   }
 
   async function removeBook(id) {
-    await deleteDoc(doc(db, "books", id));
+    await remove(ref(getDb(), `books/${id}`));
   }
 
-  // Persist a reordered list by rewriting each book's `order` field.
+  // Persist a reordered list with a single atomic multi-path update.
   async function persistOrder(ordered) {
     setBooks(ordered); // optimistic update
-    const batch = writeBatch(db);
+    const updates = {};
     ordered.forEach((b, i) => {
-      batch.update(doc(db, "books", b.id), { order: i + 1 });
+      updates[`${b.id}/order`] = i + 1;
     });
-    await batch.commit();
+    await update(ref(getDb(), "books"), updates);
   }
 
   return (
