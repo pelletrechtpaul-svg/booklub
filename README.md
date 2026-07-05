@@ -2,12 +2,19 @@
 
 Un classement dynamique et collaboratif des livres de notre book club.
 
-- **Ajouter un livre** en un clic — recherche par titre/auteur, la couverture est
-  récupérée automatiquement (Open Library) et affichée à une taille standard.
+- **Ajouter un livre** — recherche par titre/auteur (Open Library), ou **ajout
+  manuel** avec **import automatique depuis un lien Amazon** (titre, auteur,
+  année, couverture). Couverture affichée à une taille standard.
+- **Détails par livre** : qui l’a proposé, date de débat.
+- **Notes par participant** : chaque membre (Roman, Claire, Paul) note de 1 à 5
+  étoiles ; la moyenne s’affiche sur la fiche.
 - **Classement** en liste verticale responsive (mobile + desktop).
 - **Glisser-déposer** naturel pour faire monter ou descendre un livre.
 - **Temps réel** : le classement est synchronisé pour tout le monde via Firebase
   Realtime Database.
+
+> Les participants sont définis dans [`src/lib/participants.js`](./src/lib/participants.js)
+> — modifie cette liste pour changer les noms.
 
 Stack : [Next.js](https://nextjs.org) (App Router) · Firebase Realtime Database ·
 [dnd-kit](https://dndkit.com) · déploiement [Vercel](https://vercel.com).

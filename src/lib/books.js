@@ -43,3 +43,16 @@ export async function searchBooks(query) {
     cover: coverUrl(doc.cover_i),
   }));
 }
+
+// Import a book's info (title, author, year, cover) from a product URL
+// (e.g. an Amazon link) via our own server route.
+export async function importFromUrl(url) {
+  const u = url.trim();
+  if (!u) return {};
+  const res = await fetch("/api/import?url=" + encodeURIComponent(u));
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.error || "Import impossible depuis ce lien.");
+  }
+  return data;
+}

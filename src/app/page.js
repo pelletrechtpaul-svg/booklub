@@ -61,6 +61,9 @@ export default function Home() {
       author: book.author,
       cover: book.cover || "",
       year: book.year || "",
+      proposer: book.proposer || "",
+      debateDate: book.debateDate || "",
+      ratings: book.ratings || {},
       order: maxOrder + 1,
       createdAt: serverTimestamp(),
     });
@@ -68,6 +71,11 @@ export default function Home() {
 
   async function removeBook(id) {
     await remove(ref(getDb(), `books/${id}`));
+  }
+
+  // Patch a single book (proposer, debate date, a participant's rating…).
+  async function updateBook(id, patch) {
+    await update(ref(getDb(), `books/${id}`), patch);
   }
 
   // Persist a reordered list with a single atomic multi-path update.
@@ -103,6 +111,7 @@ export default function Home() {
           books={books}
           onReorder={persistOrder}
           onRemove={removeBook}
+          onUpdate={updateBook}
         />
       )}
 

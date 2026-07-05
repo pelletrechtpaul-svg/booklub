@@ -83,15 +83,20 @@ body {
 
 .book-row {
   display: flex;
-  align-items: center;
-  gap: 14px;
+  flex-direction: column;
+  gap: 10px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 12px 14px;
   box-shadow: var(--shadow);
-  touch-action: none; /* let dnd-kit own the drag gesture on touch */
   user-select: none;
+}
+
+.book-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 .book-row.dragging {
@@ -147,6 +152,76 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.avg {
+  margin-left: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.book-sub {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 2px;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+/* Per-participant ratings */
+.ratings {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.rating-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rating-name {
+  flex: 0 0 64px;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.stars {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.star {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+  padding: 2px;
+  color: var(--muted);
+}
+
+.star.on {
+  color: #e0a12a;
+}
+
+.stars-ro .star {
+  cursor: default;
+}
+
+.chosen-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: var(--surface-2);
+  border-radius: 10px;
 }
 
 .drag-handle {
