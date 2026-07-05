@@ -7,6 +7,7 @@ export default function AddBookModal({ onAdd, onClose }) {
   const [q, setQ] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -24,9 +25,11 @@ export default function AddBookModal({ onAdd, onClose }) {
     setError("");
     try {
       setResults(await searchBooks(q));
+      setSearched(true);
     } catch (err) {
       console.error(err);
-      setError("La recherche a échoué. Réessaie.");
+      setResults([]);
+      setError(err.message || "La recherche a échoué. Réessaie.");
     } finally {
       setLoading(false);
     }
@@ -73,9 +76,21 @@ export default function AddBookModal({ onAdd, onClose }) {
         {error && <div className="state">{error}</div>}
 
         <div className="results">
-          {!loading && !error && results.length === 0 && (
+          {loading && (
+            <p style={{ color: "var(--muted)", margin: "8px 4px" }}>
+              Recherche…
+            </p>
+          )}
+
+          {!loading && !error && !searched && (
             <p style={{ color: "var(--muted)", margin: "8px 4px" }}>
               Cherche un livre, puis choisis-le pour l’ajouter au classement.
+            </p>
+          )}
+
+          {!loading && !error && searched && results.length === 0 && (
+            <p style={{ color: "var(--muted)", margin: "8px 4px" }}>
+              Aucun résultat pour « {q} ». Essaie un autre titre ou l’ISBN.
             </p>
           )}
 
@@ -86,8 +101,14 @@ export default function AddBookModal({ onAdd, onClose }) {
               onClick={() => pick(book)}
               disabled={submitting}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className="cover" src={book.cover} alt="" />
+              {book.cover ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img className="cover" src={book.cover} alt="" />
+              ) : (
+                <span className="cover cover-placeholder" aria-hidden>
+                  📖
+                </span>
+              )}
               <div className="result-meta">
                 <div className="result-title">{book.title}</div>
                 <div className="result-author">
