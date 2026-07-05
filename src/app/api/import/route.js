@@ -96,14 +96,37 @@ async function fromPage(url) {
     if (!res.ok) return {};
     const html = await res.text();
     let title = metaContent(html, "og:title");
-    // Amazon often prefixes/suffixes noise; strip an "Amazon.fr - " prefix.
+    // Bookshop pages decorate og:title with site noise. Strip a leading
+    // "Amazon.fr - " style prefix and trailing " - Site name" style
+    // suffixes (site names never contain digits; a book subtitle often
+    // does, so only strip all-letter trailing segments).
     title = title.replace(/^Amazon\.[a-z.]+\s*[-:]\s*/i, "");
+    title = title
+      .split(" - ")
+      .filter(
+        (part, i, arr) =>
+          i === 0 || !(i >= arr.length - 2 && /^[^0-9]{2,40}$/.test(part) && /librair|place des|amazon|fnac|cultura|decitre|babelio|payot|^livres?$/i.test(part))
+      )
+      .join(" - ")
+      .trim();
     return {
       title,
       cover: metaContent(html, "og:image"),
     };
   } catch {
     return {};
+  }
+}
+
+// Open Library serves covers directly by ISBN; ?default=false makes it 404
+// instead of returning a 1x1 placeholder, so we can check it really exists.
+async function coverByIsbn(isbn) {
+  try {
+    const url = `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg?default=false`;
+    const res = await fetch(url, { method: "HEAD" });
+    return res.ok ? url : "";
+  } catch {
+    return "";
   }
 }
 
@@ -125,18 +148,20 @@ export async function GET(request) {
 
   const isbn = extractIsbn(target.toString());
 
-  // Run both lookups in parallel; merge with Open Library taking priority
-  // for text fields, and the page's og:image as a cover fallback.
-  const [ol, page] = await Promise.all([
+  // Run the lookups in parallel; merge with Open Library taking priority
+  // for text fields. Cover preference: Open Library record, then the
+  // page's og:image, then Open Library's direct by-ISBN cover.
+  const [ol, page, isbnCover] = await Promise.all([
     isbn ? fromOpenLibrary(isbn) : Promise.resolve({}),
     fromPage(target.toString()),
+    isbn ? coverByIsbn(isbn) : Promise.resolve(""),
   ]);
 
   const result = {
     title: ol.title || page.title || "",
     author: ol.author || "",
     year: ol.year || "",
-    cover: ol.cover || page.cover || "",
+    cover: ol.cover || page.cover || isbnCover || "",
   };
 
   if (!result.title && !result.cover) {
