@@ -106,14 +106,28 @@ body {
   opacity: 0.95;
 }
 
-.rank-badge {
+.rank-col {
   flex: 0 0 auto;
-  width: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 34px;
+}
+
+.rank-badge {
   text-align: center;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--accent);
   font-size: 1.05rem;
+}
+
+.rank-avg {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #e0a12a;
+  white-space: nowrap;
 }
 
 /* Standard, fixed cover size (2:3 ratio) */
@@ -143,9 +157,10 @@ body {
 .book-title {
   font-weight: 600;
   font-size: 1rem;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .book-author {
@@ -154,14 +169,6 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.avg {
-  margin-left: 8px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--accent);
-  white-space: nowrap;
 }
 
 .book-sub {
