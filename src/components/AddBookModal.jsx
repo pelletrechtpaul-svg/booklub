@@ -197,13 +197,13 @@ export default function AddBookModal({ onAdd, onClose }) {
         {step === "manual" && (
           <form className="manual-form" onSubmit={chooseManual}>
             <label>
-              Lien Amazon (ou autre) — import automatique
+              Lien librairie (placedeslibraires.fr, Amazon…) — import automatique
               <div className="search-form">
                 <input
                   className="search-input"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
-                  placeholder="https://www.amazon.fr/dp/…"
+                  placeholder="https://www.placedeslibraires.fr/livre/…"
                 />
                 <button
                   type="button"
