@@ -226,6 +226,91 @@ body {
   border-radius: 10px;
 }
 
+/* Clickable zone (cover + meta) that opens the book detail popup */
+.book-open {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1 1 auto;
+  min-width: 0;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.comment-count {
+  margin-left: 8px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* Book detail popup */
+.detail-scroll {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.detail-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.detail-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.detail-subtitle {
+  margin: 4px 0 0;
+  font-size: 1rem;
+}
+
+.comment-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  background: var(--surface-2);
+  border-radius: 10px;
+}
+
+.comment-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.comment-input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.92rem;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.comment-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.detail-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-align: center;
+}
+
 .drag-handle {
   flex: 0 0 auto;
   display: flex;

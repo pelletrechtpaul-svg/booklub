@@ -18,7 +18,7 @@ function average(ratings) {
   return (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
 }
 
-export default function SortableBook({ book, rank, onRemove, onUpdate }) {
+export default function SortableBook({ book, rank, onRemove, onUpdate, onOpen }) {
   const {
     attributes,
     listeners,
@@ -36,6 +36,7 @@ export default function SortableBook({ book, rank, onRemove, onUpdate }) {
 
   const ratings = book.ratings || {};
   const avg = average(ratings);
+  const commentCount = Object.values(book.comments || {}).filter(Boolean).length;
 
   return (
     <li
@@ -46,27 +47,41 @@ export default function SortableBook({ book, rank, onRemove, onUpdate }) {
       <div className="book-main">
         <span className="rank-badge">{rank}</span>
 
-        {book.cover ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img className="cover" src={book.cover} alt={book.title} />
-        ) : (
-          <span className="cover cover-placeholder" aria-hidden>
-            📖
-          </span>
-        )}
+        <div
+          className="book-open"
+          onClick={() => onOpen(book.id)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === "Enter" && onOpen(book.id)}
+          title="Voir la fiche et les avis"
+        >
+          {book.cover ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img className="cover" src={book.cover} alt={book.title} />
+          ) : (
+            <span className="cover cover-placeholder" aria-hidden>
+              📖
+            </span>
+          )}
 
-        <div className="book-meta">
-          <div className="book-title">
-            {book.title}
-            {avg && <span className="avg">★ {avg}</span>}
-          </div>
-          <div className="book-author">
-            {book.author}
-            {book.year ? ` · ${book.year}` : ""}
-          </div>
-          <div className="book-sub">
-            {book.proposer && <span>Proposé par {book.proposer}</span>}
-            {book.debateDate && <span>Débat le {formatDate(book.debateDate)}</span>}
+          <div className="book-meta">
+            <div className="book-title">
+              {book.title}
+              {avg && <span className="avg">★ {avg}</span>}
+              {commentCount > 0 && (
+                <span className="comment-count">💬 {commentCount}</span>
+              )}
+            </div>
+            <div className="book-author">
+              {book.author}
+              {book.year ? ` · ${book.year}` : ""}
+            </div>
+            <div className="book-sub">
+              {book.proposer && <span>Proposé par {book.proposer}</span>}
+              {book.debateDate && (
+                <span>Débat le {formatDate(book.debateDate)}</span>
+              )}
+            </div>
           </div>
         </div>
 
