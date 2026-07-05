@@ -96,7 +96,7 @@ export default function AddBookModal({ onAdd, onClose }) {
 
           {results.map((book) => (
             <button
-              key={book.googleId}
+              key={book.id}
               className="result"
               onClick={() => pick(book)}
               disabled={submitting}

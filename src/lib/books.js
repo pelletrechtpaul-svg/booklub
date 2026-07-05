@@ -1,9 +1,10 @@
-// Search books through the public Google Books API (no API key required, CORS-enabled).
+// Search books through the Open Library API (Internet Archive).
+// Free, no API key, CORS-enabled, and without the aggressive anonymous
+// rate limiting that makes the Google Books API return 429 from browsers.
 
-function upgradeCover(url) {
-  if (!url) return "";
-  // Google returns http thumbnails; force https and drop the page-curl edge.
-  return url.replace("http://", "https://").replace("&edge=curl", "");
+function coverUrl(coverId) {
+  // Medium-size cover (~180px wide). Returns "" when there's no cover.
+  return coverId ? `https://covers.openlibrary.org/b/id/${coverId}-M.jpg` : "";
 }
 
 export async function searchBooks(query) {
@@ -11,44 +12,34 @@ export async function searchBooks(query) {
   if (!q) return [];
 
   const url =
-    "https://www.googleapis.com/books/v1/volumes?maxResults=10&country=FR&q=" +
+    "https://openlibrary.org/search.json" +
+    "?fields=key,title,author_name,first_publish_year,cover_i" +
+    "&limit=12&q=" +
     encodeURIComponent(q);
 
   let res;
   try {
     res = await fetch(url);
   } catch (e) {
-    throw new Error("Pas de connexion à Google Books. Vérifie ton réseau.");
+    throw new Error("Pas de connexion à Open Library. Vérifie ton réseau.");
   }
 
   if (!res.ok) {
-    // Surface the real reason (rate limit, etc.) so it's diagnosable.
-    let detail = "";
-    try {
-      const body = await res.json();
-      detail = body?.error?.message || "";
-    } catch {}
     if (res.status === 429) {
       throw new Error("Trop de recherches d’un coup. Réessaie dans un instant.");
     }
-    throw new Error(
-      `La recherche a échoué (${res.status})${detail ? " : " + detail : ""}`
-    );
+    throw new Error(`La recherche a échoué (${res.status}).`);
   }
 
   const data = await res.json();
-  const items = data.items || [];
+  const docs = data.docs || [];
 
   // Keep every result; books without a cover just get a placeholder later.
-  return items.map((item) => {
-    const info = item.volumeInfo || {};
-    const links = info.imageLinks || {};
-    return {
-      googleId: item.id,
-      title: info.title || "Sans titre",
-      author: (info.authors && info.authors.join(", ")) || "Auteur inconnu",
-      year: info.publishedDate ? info.publishedDate.slice(0, 4) : "",
-      cover: upgradeCover(links.thumbnail || links.smallThumbnail || ""),
-    };
-  });
+  return docs.map((doc) => ({
+    id: doc.key, // e.g. "/works/OL893415W"
+    title: doc.title || "Sans titre",
+    author: (doc.author_name && doc.author_name.join(", ")) || "Auteur inconnu",
+    year: doc.first_publish_year ? String(doc.first_publish_year) : "",
+    cover: coverUrl(doc.cover_i),
+  }));
 }
