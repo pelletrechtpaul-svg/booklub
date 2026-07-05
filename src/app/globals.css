@@ -314,6 +314,54 @@ body {
   gap: 8px;
 }
 
+.results-hint {
+  color: var(--muted);
+  margin: 8px 4px;
+}
+
+/* Manual-entry fallback */
+.manual-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+.manual-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.manual-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.link-btn {
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 6px 2px;
+  text-align: left;
+}
+
+.link-btn:hover {
+  text-decoration: underline;
+}
+
+.manual-link {
+  margin-top: 10px;
+  align-self: flex-start;
+}
+
 .result {
   display: flex;
   align-items: center;
