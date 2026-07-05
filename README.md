@@ -3,7 +3,7 @@
 Un classement dynamique et collaboratif des livres de notre book club.
 
 - **Ajouter un livre** en un clic — recherche par titre/auteur, la couverture est
-  récupérée automatiquement (Google Books) et affichée à une taille standard.
+  récupérée automatiquement (Open Library) et affichée à une taille standard.
 - **Classement** en liste verticale responsive (mobile + desktop).
 - **Glisser-déposer** naturel pour faire monter ou descendre un livre.
 - **Temps réel** : le classement est synchronisé pour tout le monde via Firebase
@@ -80,4 +80,5 @@ Les variables à renseigner dans `.env.local` :
 - Un glisser-déposer réécrit les `order` de la liste dans une mise à jour
   atomique (`update` multi-chemins) ; grâce à l’écoute temps réel (`onValue`),
   tous les écrans se mettent à jour instantanément.
-- Les couvertures viennent de l’API publique Google Books (pas de clé requise).
+- Les couvertures et la recherche viennent de l’API publique Open Library
+  (pas de clé requise, sans limite de débit agressive).
