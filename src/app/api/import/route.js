@@ -61,6 +61,85 @@ function extractIsbn(url) {
   return "";
 }
 
+// BNF (Bibliothèque nationale de France) SRU API. Authoritative for French
+// books: publishers deposit metadata via the dépôt légal even before release,
+// so brand-new titles are found here when other catalogues don't know them
+// yet. Free, no key. Returns UNIMARC XML that we parse leniently.
+async function fromBnf(isbn) {
+  try {
+    const res = await fetch(
+      "https://catalogue.bnf.fr/api/SRU?version=1.2&operation=searchRetrieve" +
+        "&recordSchema=unimarcxchange&maximumRecords=1" +
+        `&query=bib.isbn%20any%20%22${isbn}%22`,
+      { headers: { "User-Agent": "booklub/1.0" } }
+    );
+    if (!res.ok) return {};
+    const xml = await res.text();
+
+    // Grab a whole datafield block by tag, then a subfield's text by code.
+    const field = (tag) =>
+      xml.match(
+        new RegExp(
+          `<[\\w:]*datafield[^>]*tag=["']${tag}["'][^>]*>([\\s\\S]*?)</[\\w:]*datafield>`
+        )
+      )?.[1] || "";
+    const sub = (block, code) =>
+      block.match(
+        new RegExp(
+          `<[\\w:]*subfield[^>]*code=["']${code}["'][^>]*>([\\s\\S]*?)</[\\w:]*subfield>`
+        )
+      )?.[1] || "";
+
+    const f200 = field("200"); // title statement
+    const title = decodeEntities(sub(f200, "a"));
+    const subtitle = decodeEntities(sub(f200, "e"));
+
+    const f700 = field("700"); // first author
+    const author = [decodeEntities(sub(f700, "b")), decodeEntities(sub(f700, "a"))]
+      .filter(Boolean)
+      .join(" ");
+
+    const year =
+      (decodeEntities(sub(field("214"), "d")) || decodeEntities(sub(field("210"), "d")))
+        .match(/\d{4}/)?.[0] || "";
+
+    return {
+      title: subtitle ? `${title}. ${subtitle}` : title,
+      author,
+      year,
+    };
+  } catch {
+    return {};
+  }
+}
+
+// Google Books by exact ISBN, server-side. Occasional server-side lookups
+// rarely hit the anonymous rate limit that plagues browser calls, and it's
+// only one of several sources here anyway. Good for covers of new releases.
+async function fromGoogleBooks(isbn) {
+  try {
+    const res = await fetch(
+      `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&country=FR`
+    );
+    if (!res.ok) return {};
+    const data = await res.json();
+    const info = data.items?.[0]?.volumeInfo;
+    if (!info) return {};
+    const links = info.imageLinks || {};
+    const cover = (links.thumbnail || links.smallThumbnail || "")
+      .replace("http://", "https://")
+      .replace("&edge=curl", "");
+    return {
+      title: info.title || "",
+      author: (info.authors || []).join(", "),
+      year: (info.publishedDate || "").slice(0, 4),
+      cover,
+    };
+  } catch {
+    return {};
+  }
+}
+
 async function fromOpenLibrary(isbn) {
   try {
     const res = await fetch(
@@ -148,20 +227,34 @@ export async function GET(request) {
 
   const isbn = extractIsbn(target.toString());
 
-  // Run the lookups in parallel; merge with Open Library taking priority
-  // for text fields. Cover preference: Open Library record, then the
-  // page's og:image, then Open Library's direct by-ISBN cover.
-  const [ol, page, isbnCover] = await Promise.all([
-    isbn ? fromOpenLibrary(isbn) : Promise.resolve({}),
+  // Run all lookups in parallel and merge. Text fields: Open Library
+  // (exact edition), then BNF (authoritative for French books, has
+  // brand-new releases via the dépôt légal), then Google Books, then the
+  // page's own OpenGraph tags. Covers: OL, Google, og:image, by-ISBN.
+  const none = Promise.resolve({});
+  const [ol, bnf, gb, page, isbnCover] = await Promise.all([
+    isbn ? fromOpenLibrary(isbn) : none,
+    isbn ? fromBnf(isbn) : none,
+    isbn ? fromGoogleBooks(isbn) : none,
     fromPage(target.toString()),
     isbn ? coverByIsbn(isbn) : Promise.resolve(""),
   ]);
 
+  // Last-resort title: bookshop URLs often carry a title slug right after
+  // the ISBN (e.g. /livre/978…-les-lumieres-sombres-…/). No accents, but
+  // better than an empty form.
+  const slug = isbn
+    ? target.pathname
+        .match(new RegExp(`${isbn}-([a-z0-9-]+)`, "i"))?.[1]
+        ?.replace(/-/g, " ")
+        .replace(/^./, (c) => c.toUpperCase()) || ""
+    : "";
+
   const result = {
-    title: ol.title || page.title || "",
-    author: ol.author || "",
-    year: ol.year || "",
-    cover: ol.cover || page.cover || isbnCover || "",
+    title: ol.title || bnf.title || gb.title || page.title || slug || "",
+    author: ol.author || bnf.author || gb.author || "",
+    year: ol.year || bnf.year || gb.year || "",
+    cover: ol.cover || gb.cover || page.cover || isbnCover || "",
   };
 
   if (!result.title && !result.cover) {
