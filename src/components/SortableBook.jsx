@@ -45,7 +45,10 @@ export default function SortableBook({ book, rank, onRemove, onUpdate, onOpen })
       className={"book-row" + (isDragging ? " dragging" : "")}
     >
       <div className="book-main">
-        <span className="rank-badge">{rank}</span>
+        <div className="rank-col">
+          <span className="rank-badge">{rank}</span>
+          {avg && <span className="rank-avg">★ {avg}</span>}
+        </div>
 
         <div
           className="book-open"
@@ -67,7 +70,6 @@ export default function SortableBook({ book, rank, onRemove, onUpdate, onOpen })
           <div className="book-meta">
             <div className="book-title">
               {book.title}
-              {avg && <span className="avg">★ {avg}</span>}
               {commentCount > 0 && (
                 <span className="comment-count">💬 {commentCount}</span>
               )}
