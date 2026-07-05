@@ -1,9 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { searchBooks } from "@/lib/books";
+import { searchBooks, importFromUrl } from "@/lib/books";
+import { PARTICIPANTS } from "@/lib/participants";
 
 export default function AddBookModal({ onAdd, onClose }) {
+  // step: "search" | "manual" | "details"
+  const [step, setStep] = useState("search");
+
   const [q, setQ] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -11,12 +15,18 @@ export default function AddBookModal({ onAdd, onClose }) {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // Manual-entry mode (fallback when a book isn't in the catalogue).
-  const [manual, setManual] = useState(false);
+  // Manual-entry fields.
+  const [url, setUrl] = useState("");
+  const [importing, setImporting] = useState(false);
   const [mTitle, setMTitle] = useState("");
   const [mAuthor, setMAuthor] = useState("");
   const [mYear, setMYear] = useState("");
   const [mCover, setMCover] = useState("");
+
+  // The chosen book, then the details step.
+  const [chosen, setChosen] = useState(null);
+  const [proposer, setProposer] = useState("");
+  const [debateDate, setDebateDate] = useState("");
 
   // Close on Escape.
   useEffect(() => {
@@ -42,10 +52,49 @@ export default function AddBookModal({ onAdd, onClose }) {
     }
   }
 
-  async function pick(book) {
+  async function handleImport() {
+    if (!url.trim()) return;
+    setImporting(true);
+    setError("");
+    try {
+      const info = await importFromUrl(url);
+      if (info.title) setMTitle(info.title);
+      if (info.author) setMAuthor(info.author);
+      if (info.year) setMYear(info.year);
+      if (info.cover) setMCover(info.cover);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Import impossible depuis ce lien.");
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  // Move a chosen book to the details step (proposer / debate date).
+  function chooseSearch(book) {
+    setChosen(book);
+    setError("");
+    setStep("details");
+  }
+
+  function chooseManual(e) {
+    e.preventDefault();
+    if (!mTitle.trim()) return;
+    setChosen({
+      title: mTitle.trim(),
+      author: mAuthor.trim() || "Auteur inconnu",
+      year: mYear.trim(),
+      cover: mCover.trim(),
+    });
+    setError("");
+    setStep("details");
+  }
+
+  async function confirmAdd(e) {
+    e.preventDefault();
     setSubmitting(true);
     try {
-      await onAdd(book);
+      await onAdd({ ...chosen, proposer, debateDate, ratings: {} });
       onClose();
     } catch (err) {
       console.error(err);
@@ -55,21 +104,17 @@ export default function AddBookModal({ onAdd, onClose }) {
   }
 
   function openManual() {
-    setMTitle(q); // prefill with what was typed in the search box
+    setMTitle(q);
     setError("");
-    setManual(true);
+    setStep("manual");
   }
 
-  async function handleManualSubmit(e) {
-    e.preventDefault();
-    if (!mTitle.trim()) return;
-    await pick({
-      title: mTitle.trim(),
-      author: mAuthor.trim() || "Auteur inconnu",
-      year: mYear.trim(),
-      cover: mCover.trim(),
-    });
-  }
+  const heading =
+    step === "details"
+      ? "Détails"
+      : step === "manual"
+      ? "Ajouter à la main"
+      : "Ajouter un livre";
 
   return (
     <div
@@ -78,21 +123,105 @@ export default function AddBookModal({ onAdd, onClose }) {
     >
       <div className="modal" role="dialog" aria-modal="true">
         <div className="modal-head">
-          <h2>{manual ? "Ajouter à la main" : "Ajouter un livre"}</h2>
+          <h2>{heading}</h2>
           <button className="icon-btn" onClick={onClose} aria-label="Fermer">
             ✕
           </button>
         </div>
 
-        {manual ? (
-          <form className="manual-form" onSubmit={handleManualSubmit}>
+        {/* ---- DETAILS STEP ---- */}
+        {step === "details" && chosen && (
+          <form className="manual-form" onSubmit={confirmAdd}>
+            <div className="chosen-preview">
+              {chosen.cover ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img className="cover" src={chosen.cover} alt="" />
+              ) : (
+                <span className="cover cover-placeholder" aria-hidden>
+                  📖
+                </span>
+              )}
+              <div className="result-meta">
+                <div className="result-title">{chosen.title}</div>
+                <div className="result-author">
+                  {chosen.author}
+                  {chosen.year ? ` · ${chosen.year}` : ""}
+                </div>
+              </div>
+            </div>
+
+            <label>
+              Proposé par
+              <select
+                className="search-input"
+                value={proposer}
+                onChange={(e) => setProposer(e.target.value)}
+              >
+                <option value="">—</option>
+                {PARTICIPANTS.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              Date de débat
+              <input
+                className="search-input"
+                type="date"
+                value={debateDate}
+                onChange={(e) => setDebateDate(e.target.value)}
+              />
+            </label>
+
+            {error && <div className="state">{error}</div>}
+
+            <div className="manual-actions">
+              <button
+                type="button"
+                className="link-btn"
+                onClick={() => setStep(chosen && mTitle ? "manual" : "search")}
+              >
+                ← Retour
+              </button>
+              <button className="btn" type="submit" disabled={submitting}>
+                {submitting ? "…" : "Ajouter au classement"}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* ---- MANUAL STEP ---- */}
+        {step === "manual" && (
+          <form className="manual-form" onSubmit={chooseManual}>
+            <label>
+              Lien Amazon (ou autre) — import automatique
+              <div className="search-form">
+                <input
+                  className="search-input"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder="https://www.amazon.fr/dp/…"
+                />
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={handleImport}
+                  disabled={importing}
+                >
+                  {importing ? "…" : "Importer"}
+                </button>
+              </div>
+            </label>
+
             <label>
               Titre *
               <input
                 className="search-input"
                 value={mTitle}
                 onChange={(e) => setMTitle(e.target.value)}
-                autoFocus
                 required
               />
             </label>
@@ -140,16 +269,22 @@ export default function AddBookModal({ onAdd, onClose }) {
               <button
                 type="button"
                 className="link-btn"
-                onClick={() => setManual(false)}
+                onClick={() => {
+                  setError("");
+                  setStep("search");
+                }}
               >
                 ← Revenir à la recherche
               </button>
-              <button className="btn" type="submit" disabled={submitting}>
-                {submitting ? "…" : "Ajouter au classement"}
+              <button className="btn" type="submit">
+                Continuer
               </button>
             </div>
           </form>
-        ) : (
+        )}
+
+        {/* ---- SEARCH STEP ---- */}
+        {step === "search" && (
           <>
             <form className="search-form" onSubmit={handleSearch}>
               <input
@@ -167,9 +302,7 @@ export default function AddBookModal({ onAdd, onClose }) {
             {error && <div className="state">{error}</div>}
 
             <div className="results">
-              {loading && (
-                <p className="results-hint">Recherche…</p>
-              )}
+              {loading && <p className="results-hint">Recherche…</p>}
 
               {!loading && !error && !searched && (
                 <p className="results-hint">
@@ -178,17 +311,14 @@ export default function AddBookModal({ onAdd, onClose }) {
               )}
 
               {!loading && !error && searched && results.length === 0 && (
-                <p className="results-hint">
-                  Aucun résultat pour « {q} ».
-                </p>
+                <p className="results-hint">Aucun résultat pour « {q} ».</p>
               )}
 
               {results.map((book) => (
                 <button
                   key={book.id}
                   className="result"
-                  onClick={() => pick(book)}
-                  disabled={submitting}
+                  onClick={() => chooseSearch(book)}
                 >
                   {book.cover ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -209,7 +339,11 @@ export default function AddBookModal({ onAdd, onClose }) {
               ))}
             </div>
 
-            <button type="button" className="link-btn manual-link" onClick={openManual}>
+            <button
+              type="button"
+              className="link-btn manual-link"
+              onClick={openManual}
+            >
               Tu ne trouves pas ton livre ? Ajoute-le à la main
             </button>
           </>
