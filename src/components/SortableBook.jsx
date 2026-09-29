@@ -18,7 +18,14 @@ function average(ratings) {
   return (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
 }
 
-export default function SortableBook({ book, rank, onRemove, onUpdate, onOpen }) {
+export default function SortableBook({
+  book,
+  rank,
+  onRemove,
+  onUpdate,
+  onOpen,
+  draggable = true,
+}) {
   const {
     attributes,
     listeners,
@@ -79,6 +86,9 @@ export default function SortableBook({ book, rank, onRemove, onUpdate, onOpen })
               {book.year ? ` · ${book.year}` : ""}
             </div>
             <div className="book-sub">
+              {book.category && (
+                <span className="cat-badge">{book.category}</span>
+              )}
               {book.proposer && <span>Proposé par {book.proposer}</span>}
               {book.debateDate && (
                 <span>Débat le {formatDate(book.debateDate)}</span>
@@ -99,15 +109,17 @@ export default function SortableBook({ book, rank, onRemove, onUpdate, onOpen })
           ✕
         </button>
 
-        <span
-          className="drag-handle"
-          {...attributes}
-          {...listeners}
-          aria-label="Déplacer"
-          title="Glisser pour réordonner"
-        >
-          ⠿
-        </span>
+        {draggable && (
+          <span
+            className="drag-handle"
+            {...attributes}
+            {...listeners}
+            aria-label="Déplacer"
+            title="Glisser pour réordonner"
+          >
+            ⠿
+          </span>
+        )}
       </div>
 
       <div className="ratings">

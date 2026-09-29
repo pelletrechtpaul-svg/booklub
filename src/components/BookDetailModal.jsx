@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { PARTICIPANTS } from "@/lib/participants";
+import { CATEGORIES } from "@/lib/categories";
 import Stars from "./Stars";
 
 // Detail popup for one book: everyone's stars and a free-text comment per
@@ -50,6 +51,21 @@ export default function BookDetailModal({ book, onUpdate, onClose }) {
           </div>
 
           <div className="detail-fields">
+            <label>
+              Catégorie
+              <select
+                className="search-input"
+                value={book.category || ""}
+                onChange={(e) => onUpdate(book.id, { category: e.target.value })}
+              >
+                <option value="">—</option>
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </label>
             <label>
               Proposé par
               <select

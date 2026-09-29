@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { searchBooks, importFromUrl } from "@/lib/books";
 import { PARTICIPANTS } from "@/lib/participants";
+import { CATEGORIES } from "@/lib/categories";
 
 export default function AddBookModal({ onAdd, onClose }) {
   // step: "search" | "manual" | "details"
@@ -27,6 +28,7 @@ export default function AddBookModal({ onAdd, onClose }) {
   const [chosen, setChosen] = useState(null);
   const [proposer, setProposer] = useState("");
   const [debateDate, setDebateDate] = useState("");
+  const [category, setCategory] = useState("");
 
   // Close on Escape.
   useEffect(() => {
@@ -94,7 +96,7 @@ export default function AddBookModal({ onAdd, onClose }) {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await onAdd({ ...chosen, proposer, debateDate, ratings: {} });
+      await onAdd({ ...chosen, proposer, debateDate, category, ratings: {} });
       onClose();
     } catch (err) {
       console.error(err);
@@ -149,6 +151,22 @@ export default function AddBookModal({ onAdd, onClose }) {
                 </div>
               </div>
             </div>
+
+            <label>
+              Catégorie
+              <select
+                className="search-input"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+              >
+                <option value="">—</option>
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </label>
 
             <label>
               Proposé par
