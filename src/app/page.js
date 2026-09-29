@@ -21,10 +21,20 @@ export default function Home() {
   const [error, setError] = useState("");
   const [adding, setAdding] = useState(false);
   const [openId, setOpenId] = useState(null);
-  const [filter, setFilter] = useState("Tous");
 
-  const shownBooks =
-    filter === "Tous" ? books : books.filter((b) => b.category === filter);
+  // One ranking per category, stacked. Books without a (known) category
+  // land in an extra "À classer" section until someone sets it.
+  const sections = [
+    ...CATEGORIES.map((c) => ({
+      label: c,
+      books: books.filter((b) => b.category === c),
+    })),
+    {
+      label: "À classer",
+      unclassified: true,
+      books: books.filter((b) => !CATEGORIES.includes(b.category)),
+    },
+  ];
 
   // Live subscription — the ranking updates in real time for everyone.
   useEffect(() => {
@@ -86,13 +96,33 @@ export default function Home() {
     await update(ref(getDb(), `books/${id}`), patch);
   }
 
-  // Persist a reordered list with a single atomic multi-path update.
-  async function persistOrder(ordered) {
-    setBooks(ordered); // optimistic update
-    const updates = {};
-    ordered.forEach((b, i) => {
-      updates[`${b.id}/order`] = i + 1;
+  // Persist a reorder within one section. The subset keeps the global
+  // order slots it already occupied — reassigned in the new arrangement —
+  // so the other sections' ordering is untouched.
+  async function persistOrder(orderedSubset) {
+    const slots = orderedSubset
+      .map((b) => b.order ?? 0)
+      .sort((a, b) => a - b);
+    const newOrderById = {};
+    orderedSubset.forEach((b, i) => {
+      newOrderById[b.id] = slots[i];
     });
+
+    // Optimistic update.
+    setBooks((prev) =>
+      prev
+        .map((b) =>
+          newOrderById[b.id] !== undefined
+            ? { ...b, order: newOrderById[b.id] }
+            : b
+        )
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    );
+
+    const updates = {};
+    for (const [id, order] of Object.entries(newOrderById)) {
+      updates[`${id}/order`] = order;
+    }
     await update(ref(getDb(), "books"), updates);
   }
 
@@ -114,41 +144,38 @@ export default function Home() {
         </div>
       )}
 
-      {!error && !loading && books.length > 0 && (
-        <>
-          <div className="filter-bar" role="tablist" aria-label="Catégorie">
-            {["Tous", ...CATEGORIES].map((c) => (
-              <button
-                key={c}
-                className={"chip" + (filter === c ? " chip-on" : "")}
-                onClick={() => setFilter(c)}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
-
-          {filter !== "Tous" && (
-            <p className="filter-hint">
-              Filtre actif — le glisser-déposer est désactivé. Repasse sur
-              « Tous » pour réordonner.
-            </p>
-          )}
-
-          {shownBooks.length === 0 ? (
-            <div className="state">Aucun livre dans cette catégorie.</div>
-          ) : (
-            <Ranking
-              books={shownBooks}
-              onReorder={persistOrder}
-              onRemove={removeBook}
-              onUpdate={updateBook}
-              onOpen={setOpenId}
-              reorderable={filter === "Tous"}
-            />
-          )}
-        </>
-      )}
+      {!error &&
+        !loading &&
+        books.length > 0 &&
+        sections.map(
+          (section) =>
+            // "À classer" only shows while it has books; the two real
+            // categories always show, with a hint when empty.
+            (!section.unclassified || section.books.length > 0) && (
+              <section className="ranking-section" key={section.label}>
+                <h2 className="section-title">
+                  {section.label}
+                  <span className="section-count">{section.books.length}</span>
+                </h2>
+                {section.unclassified && (
+                  <p className="section-hint">
+                    Tape sur un livre pour lui donner une catégorie.
+                  </p>
+                )}
+                {section.books.length === 0 ? (
+                  <p className="section-hint">Aucun livre pour l’instant.</p>
+                ) : (
+                  <Ranking
+                    books={section.books}
+                    onReorder={persistOrder}
+                    onRemove={removeBook}
+                    onUpdate={updateBook}
+                    onOpen={setOpenId}
+                  />
+                )}
+              </section>
+            )
+        )}
 
       <button className="fab" onClick={() => setAdding(true)}>
         <span aria-hidden>＋</span> Ajouter un livre
