@@ -86,9 +86,6 @@ export default function SortableBook({
               {book.year ? ` · ${book.year}` : ""}
             </div>
             <div className="book-sub">
-              {book.category && (
-                <span className="cat-badge">{book.category}</span>
-              )}
               {book.proposer && <span>Proposé par {book.proposer}</span>}
               {book.debateDate && (
                 <span>Débat le {formatDate(book.debateDate)}</span>

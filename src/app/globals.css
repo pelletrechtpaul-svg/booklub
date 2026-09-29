@@ -73,48 +73,33 @@ body {
   font-size: 0.95rem;
 }
 
-/* Category filter chips */
-.filter-bar {
+/* Stacked category sections */
+.ranking-section {
+  margin-bottom: 28px;
+}
+
+.section-title {
   display: flex;
-  flex-wrap: wrap;
+  align-items: baseline;
   gap: 8px;
-  margin-bottom: 14px;
+  margin: 0 0 10px;
+  font-size: 1.2rem;
+  letter-spacing: -0.01em;
 }
 
-.chip {
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
-  border-radius: 999px;
-  padding: 6px 14px;
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-
-.chip:hover {
-  border-color: var(--accent);
-}
-
-.chip-on {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
+.section-count {
+  font-size: 0.8rem;
   font-weight: 600;
-}
-
-.filter-hint {
-  margin: -6px 0 12px;
-  font-size: 0.78rem;
   color: var(--muted);
+  background: var(--surface-2);
+  border-radius: 999px;
+  padding: 1px 8px;
 }
 
-.cat-badge {
-  display: inline-block;
-  padding: 1px 8px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--surface-2);
-  font-size: 0.72rem;
+.section-hint {
+  margin: 0 0 10px;
+  font-size: 0.82rem;
+  color: var(--muted);
 }
 
 /* Ranking list */
