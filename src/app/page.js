@@ -10,6 +10,7 @@ import {
   serverTimestamp,
 } from "firebase/database";
 import { getDb } from "@/lib/firebase";
+import { CATEGORIES } from "@/lib/categories";
 import Ranking from "@/components/Ranking";
 import AddBookModal from "@/components/AddBookModal";
 import BookDetailModal from "@/components/BookDetailModal";
@@ -20,6 +21,10 @@ export default function Home() {
   const [error, setError] = useState("");
   const [adding, setAdding] = useState(false);
   const [openId, setOpenId] = useState(null);
+  const [filter, setFilter] = useState("Tous");
+
+  const shownBooks =
+    filter === "Tous" ? books : books.filter((b) => b.category === filter);
 
   // Live subscription — the ranking updates in real time for everyone.
   useEffect(() => {
@@ -65,6 +70,7 @@ export default function Home() {
       year: book.year || "",
       proposer: book.proposer || "",
       debateDate: book.debateDate || "",
+      category: book.category || "",
       ratings: book.ratings || {},
       order: maxOrder + 1,
       createdAt: serverTimestamp(),
@@ -109,13 +115,39 @@ export default function Home() {
       )}
 
       {!error && !loading && books.length > 0 && (
-        <Ranking
-          books={books}
-          onReorder={persistOrder}
-          onRemove={removeBook}
-          onUpdate={updateBook}
-          onOpen={setOpenId}
-        />
+        <>
+          <div className="filter-bar" role="tablist" aria-label="Catégorie">
+            {["Tous", ...CATEGORIES].map((c) => (
+              <button
+                key={c}
+                className={"chip" + (filter === c ? " chip-on" : "")}
+                onClick={() => setFilter(c)}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+
+          {filter !== "Tous" && (
+            <p className="filter-hint">
+              Filtre actif — le glisser-déposer est désactivé. Repasse sur
+              « Tous » pour réordonner.
+            </p>
+          )}
+
+          {shownBooks.length === 0 ? (
+            <div className="state">Aucun livre dans cette catégorie.</div>
+          ) : (
+            <Ranking
+              books={shownBooks}
+              onReorder={persistOrder}
+              onRemove={removeBook}
+              onUpdate={updateBook}
+              onOpen={setOpenId}
+              reorderable={filter === "Tous"}
+            />
+          )}
+        </>
       )}
 
       <button className="fab" onClick={() => setAdding(true)}>
