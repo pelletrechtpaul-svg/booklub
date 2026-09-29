@@ -1,12 +1,14 @@
 "use client";
 
-// A 1–5 star rating. Click a star to set the value; click the current
+// A 1–10 star rating. Click a star to set the value; click the current
 // value again to clear it. Read-only when onChange is omitted.
+const STEPS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
 export default function Stars({ value = 0, onChange }) {
   const readOnly = typeof onChange !== "function";
   return (
     <span className={"stars" + (readOnly ? " stars-ro" : "")}>
-      {[1, 2, 3, 4, 5].map((n) => (
+      {STEPS.map((n) => (
         <button
           key={n}
           type="button"
@@ -16,7 +18,7 @@ export default function Stars({ value = 0, onChange }) {
           }
           disabled={readOnly}
           aria-label={`${n} étoile${n > 1 ? "s" : ""}`}
-          title={`${n}/5`}
+          title={`${n}/10`}
         >
           {n <= value ? "★" : "☆"}
         </button>
