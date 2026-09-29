@@ -196,23 +196,27 @@ body {
 }
 
 .rating-name {
-  flex: 0 0 64px;
+  flex: 0 0 52px;
   font-size: 0.85rem;
   color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .stars {
   display: inline-flex;
-  gap: 2px;
+  gap: 0;
 }
 
+/* 10 stars must fit beside the name on a 320px-wide phone. */
 .star {
   border: none;
   background: transparent;
   cursor: pointer;
-  font-size: 1.25rem;
+  font-size: clamp(0.9rem, 4.2vw, 1.15rem);
   line-height: 1;
-  padding: 2px;
+  padding: 3px 1px;
   color: var(--muted);
 }
 
